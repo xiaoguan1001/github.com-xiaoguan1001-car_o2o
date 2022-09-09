@@ -11,5 +11,4 @@ import java.math.BigDecimal;
 @ToString
 public class Brand {
     private String name;
-    private BigDecimal price;
 }
