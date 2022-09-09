@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wolfcode.car.business.mapper.CarPackageAuditMapper" >
+  <resultMap id="BaseResultMap" type="cn.wolfcode.car.business.domain.CarPackageAudit" >
+    <id column="id" property="id" />
+    <result column="service_item_id" property="serviceItemId" />
+    <result column="service_item_info" property="serviceItemInfo" />
+    <result column="audit_record" property="auditRecord" />
+    <result column="service_item_price" property="serviceItemPrice" />
+    <result column="instance_id" property="instanceId" />
+    <result column="creator" property="creator" />
+    <result column="auditor_id" property="auditorId" />
+    <result column="su_userName" property="auditor.userName" />
+    <result column="bpmnInfo_id" property="bpmnInfoId" />
+    <result column="info" property="info" />
+    <result column="status" property="status" />
+    <result column="audit_time" property="auditTime" />
+    <result column="create_time" property="createTime" />
+    <result column="si_name" property="serviceItem.name" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" >
+    delete from bus_car_package_audit
+    where id = #{id}
+  </delete>
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id" >
+    insert into bus_car_package_audit (service_item_id, service_item_info, audit_record, service_item_price, 
+      instance_id, creator, auditor_id, bpmnInfo_id, info, status, audit_time, 
+      create_time)
+    values (#{serviceItemId}, #{serviceItemInfo}, #{auditRecord}, #{serviceItemPrice}, 
+      #{instanceId}, #{creator}, #{auditorId}, #{bpmnInfoId}, #{info}, #{status}, #{auditTime},
+      #{createTime})
+  </insert>
+  <update id="updateByPrimaryKey" >
+    update bus_car_package_audit
+    set service_item_id = #{serviceItemId},
+      service_item_info = #{serviceItemInfo},
+      audit_record = #{auditRecord},
+      service_item_price = #{serviceItemPrice},
+      instance_id = #{instanceId},
+      creator = #{creator},
+      auditor_id = #{auditorId},
+      bpmnInfo_id = #{bpmnInfoId},
+      info = #{info},
+      status = #{status},
+      audit_time = #{auditTime},
+      create_time = #{createTime}
+    where id = #{id}
+  </update>
+    <update id="updateInstanceId">
+      update bus_car_package_audit
+        set instance_id=#{processdefinitionId}
+        where id=#{id}
+    </update>
+  <update id="updateAuditStatus">
+      update bus_car_package_audit
+        set status=#{status}
+        where id=#{id}
+    </update>
+
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" >
+    select id, service_item_id, service_item_info, audit_record, service_item_price, 
+    instance_id, creator, auditor_id, bpmnInfo_id, info, status, audit_time, create_time
+    from bus_car_package_audit
+    where id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap" >
+    select id, service_item_id, service_item_info, audit_record, service_item_price, 
+    instance_id, creator, auditor_id, bpmnInfo_id, info, status, audit_time, create_time
+    from bus_car_package_audit
+  </select>
+  <select id="selectForList" resultMap="BaseResultMap" >
+    select cpa.id, cpa.service_item_id, cpa.service_item_info, cpa.audit_record, cpa.service_item_price,
+           cpa.instance_id, cpa.creator, cpa.auditor_id, cpa.bpmnInfo_id, cpa.info, cpa.status,
+           cpa.audit_time, cpa.create_time,su.user_name su_userName,si.name si_name
+    from bus_car_package_audit cpa LEFT JOIN sys_user su on cpa.auditor_id = su.id
+        left join bus_service_item si ON cpa.service_item_id= si.id
+
+    <where>
+      <if test="beginTime != null">
+        AND cpa.audit_time >= #{beginTime}
+      </if>
+      <if test="endTime != null">
+        AND cpa.audit_time &lt;= #{endTime}
+      </if>
+      <if test="auditorId != null">
+         AND cpa.auditor_id =#{auditorId}
+      </if>
+     <if test="status != null">
+        AND cpa.status =#{status}
+      </if>
+      <if test="info != null and info != ''">
+        AND cpa.info like concat('%',#{info},'%')
+      </if>
+    </where>
+  </select>
+
+
+
+</mapper>

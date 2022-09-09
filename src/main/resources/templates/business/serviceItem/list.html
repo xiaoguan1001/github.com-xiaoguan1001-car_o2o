@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="common/include :: header('客户列表')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="post-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								名称：<input type="text" name="name"/>
+							</li>
+							<li>
+								是否套餐：
+								<select name="carPackage" th:with="type=${@dict.getType('si_car_package')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${type}" th:text="${dict.label}" th:value="${dict.value}"></option>
+								</select>
+							</li>
+							<li>
+								服务分类：
+								<select name="serviceCatalog" th:with="type=${@dict.getType('si_service_catalog')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${type}" th:text="${dict.label}" th:value="${dict.value}"></option>
+								</select>
+							</li>
+							<li>
+								审核状态：
+								<select name="auditStatus" th:with="type=${@dict.getType('si_audit_status')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${type}" th:text="${dict.label}" th:value="${dict.value}"></option>
+								</select>
+							</li>
+							<li>
+								上架状态：
+								<select name="saleStatus" th:with="type=${@dict.getType('si_sale_status')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${type}" th:text="${dict.label}" th:value="${dict.value}"></option>
+								</select>
+							</li>
+
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+							    <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+
+			<div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="system:post:add">
+	                <i class="fa fa-plus"></i> 新增
+	            </a>
+				<a class="btn btn-warning auditBtn" onclick="startAudit()" >
+					<i class="fa fa-download"></i> 发起审核
+				</a>
+	        </div>
+
+	        <div class="col-sm-12 select-table table-striped">
+			    <table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="common/include :: footer" />
+	<script th:inline="javascript">
+		var carPackageDatas = [[${@dict.getType('si_car_package')}]];
+		var serviceCatalogDatas = [[${@dict.getType('si_service_catalog')}]];
+		var auditStatusDatas = [[${@dict.getType('si_audit_status')}]];
+		var saleStatusDatas = [[${@dict.getType('si_sale_status')}]];
+
+		var prefix = ctx + "/system/serviceItem";
+		$(function() {
+			// options 就就是我们界面可能需要用到的一些属性
+		    var options = {
+		        url: prefix + "/query",					// 查询url
+		        createUrl: prefix + "/addPage",			//
+		        updateUrl: prefix + "/editPage?id={id}",
+		        removeUrl: prefix + "/remove",
+		        exportUrl: prefix + "/export",
+		        sortName: "seq",
+		        modalName: "客户",
+		        columns: [{
+		            checkbox: true
+		        },
+		        {
+		            field: 'id',
+		            title: '服务项id',
+					visible: false
+		        },
+		        {
+		            field: 'name',
+		            title: '服务项名称',
+		            sortable: true
+		        },
+
+		        {
+		            field: 'originalPrice',
+		            title: '服务项原价',
+		            sortable: true
+		        },{
+					field: 'discountPrice',
+					title: '服务项折扣价',
+					sortable: true
+				},{
+					field: 'discountPrice',
+					title: '服务项折扣价',
+					sortable: true
+				},{
+					field: 'carPackage',
+					title: '是否套餐',
+					sortable: true,
+					formatter: function(value, row, index) {
+						// 判断是不是套餐
+						if (row.carPackage == 1){
+							return "是";
+						}else {
+							return "否";
+						}
+					}
+				},{
+					field: 'info',
+					title: '备注信息',
+					sortable: true,
+					formatter: function(value, row, index) {
+						return $.table.tooltip(value, 4, "open");
+					}
+				},{
+					field: 'serviceCatalog',
+					title: '服务分类',
+					sortable: true,
+					formatter: function(value, row, index) {
+						return $.table.selectDictLabel(serviceCatalogDatas,value);
+					}
+				},{
+					field: 'auditStatus',
+					title: '审核状态',
+					sortable: true,
+					formatter: function(value, row, index) {
+						return $.table.selectDictLabel(auditStatusDatas,value);
+					}
+				},{
+						field: 'saleStatus',
+						title: '上架状态',
+						sortable: true,
+						formatter: function(value, row, index) {
+							return $.table.selectDictLabel(saleStatusDatas,value);
+						}
+				},{
+		            title: '操作',
+		            align: 'center',
+		            formatter: function(value, row, index) {
+
+		                var actions = [];
+
+						let destroy = '';
+						// 在上架状态和审核中状态是不允许编辑的,要让按钮变灰
+		                if (row.saleStatus == 1){
+
+							destroy += 'disabled';
+						}else if (row.auditStatus == 1){
+							console.log('1');
+							destroy += 'disabled';
+						}
+
+		                actions.push('<a class="btn btn-success '+destroy+' btn-xs " href="javascript:void(0)" ' +
+								'onclick="$.operate.edit(\'' + row.id + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+
+		                let onTheShelf = '';
+
+						if (row.saleStatus != 1){
+
+							if (row.carPackage == 1){
+								// 上架: 必须要处于下架状态才可以上架 如果是非套餐可以直接上架,
+								if (row.auditStatus != 2) {
+									// 如果是套餐,必须要审核通过的状态才可以上架
+									onTheShelf += 'disabled';
+								}
+								actions.push('<a class="btn btn-primary '+onTheShelf+' btn-xs " href="javascript:void(0)" ' +
+										'onclick="saleOff(\'' + row.id + '\')"><i class="fa fa-edit"></i>上架</a> ');
+
+							}else {
+
+								actions.push('<a class="btn btn-primary  btn-xs " href="javascript:void(0)" ' +
+										'onclick="saleOff(\'' + row.id + '\')"><i class="fa fa-edit"></i>上架</a> ');
+							}
+
+						}else {
+							// 下架: 必须要是上架状态才可以下架
+							actions.push('<a class="btn btn-warning btn-xs " href="javascript:void(0)"' +
+									' onclick="saleOn(\'' + row.id + '\')"><i class="fa fa-remove"></i>下架</a>');
+						}
+
+						return actions.join('');
+		            }
+		        }]
+		    };
+
+		    $.table.init(options);
+		});
+
+		// 发起审核操作
+		function startAudit() {
+			var rows = $.table.selectColumns("id");
+			if (rows[0] != null) {
+				$.modal.open("发起审核", prefix + "/auditPage?id="+rows[0]);
+			}
+		}
+
+
+		// 上架
+		function saleOff(id){
+
+			$.modal.confirm('你确定要上架这条数据吗',function () {
+				$.operate.get(prefix+'/saleOff?id='+id,'get');
+			});
+		}
+
+
+
+		// 下架
+		function saleOn(id){
+
+			$.modal.confirm('你确定要上架这条数据吗',function () {
+				$.operate.get(prefix+'/saleOn?id='+id,'get');
+			});
+		}
+
+	</script>
+</body>
+</html>

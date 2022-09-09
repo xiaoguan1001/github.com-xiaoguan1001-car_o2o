@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="common/include :: header('计算单列表')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="post-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								客户姓名：<input type="text" name="customerName"/>
+							</li>
+							<li>
+								联系方式：<input type="text" name="customerPhone"/>
+							</li>
+							<li>
+								车牌号码：<input type="text" name="licensePlate"/>
+							</li>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+							    <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+
+			<div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="system:post:add">
+					<i class="fa fa-plus"></i> 添加
+	            </a>
+	        </div>
+
+	        <div class="col-sm-12 select-table table-striped">
+			    <table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="common/include :: footer" />
+	<script th:inline="javascript">
+		// 权限
+		var editFlag = [[${@permission.hasPermi('business:statement:edit')}]];
+		var removeFlag = [[${@permission.hasPermi('business:statement:remove')}]];
+		var detailFlag = [[${@permission.hasPermi('business:statement:detail')}]];
+		// 字典内容
+		var serviceCatalog = [[${@dict.getType('si_service_catalog')}]];
+		var statementStatus = [[${@dict.getType('statement_status')}]];
+
+		var prefix = ctx + "/system/statement";
+		$(function() {
+			// options 就就是我们界面可能需要用到的一些属性
+		    var options = {
+		        url: prefix + "/query",					// 查询url
+		        createUrl: prefix + "/addPage",			//
+		        updateUrl: prefix + "/editPage?id={id}",
+		        removeUrl: prefix + "/remove",
+		        exportUrl: prefix + "/export",
+		        sortName: "seq",
+		        modalName: "计算单",
+		        columns: [{
+		            checkbox: true
+		        },
+		        {
+		            field: 'id',
+		            title: '客户id',
+					visible: false
+		        },
+		        {
+		            field: 'customerName',
+		            title: '客户姓名',
+		            sortable: true
+		        },
+
+		        {
+		            field: 'customerPhone',
+		            title: '联系方式',
+		            sortable: true
+		        },{
+						field: 'actualArrivalTime',
+						title: '到店时间',
+						sortable: true
+				},{
+					field: 'actualArrivalTime',
+					title: '实际到店时间',
+					sortable: true
+				},{
+					field: 'licensePlate',
+					title: '车牌号码',
+					sortable: true
+				},{
+						field: 'carSeries',
+						title: '汽车类型',
+						sortable: true
+				},{
+						field: 'serviceType',
+						title: '服务类型',
+						sortable: true,
+						formatter: function(value, row, index) {
+							return $.table.selectDictLabel(serviceCatalog,value);
+						}
+				},{
+						field: 'appointmentId',
+						title: '预约用户',
+						sortable: true,
+						formatter: function(value, row, index) {
+							return value != null ? '是':'否';
+						}
+				},{
+					field: 'status',
+					title: '结算状态',
+					sortable: true,
+					formatter: function(value, row, index) {
+						return $.table.selectDictLabel(statementStatus,value);
+					}
+				},{
+		            title: '操作',
+		            align: 'center',
+		            formatter: function(value, row, index) {
+
+
+
+						var editBtnFlag = editFlag;
+						var removeBtnFlag = removeFlag;
+						if(row.status==1){
+							editBtnFlag += " disabled"
+							removeBtnFlag += " disabled"
+						}
+						var actions = [];
+						actions.push('<a class="btn btn-success btn-xs '+editBtnFlag+'" href="javascript:void(0)" onclick="$.operate.edit(\'' + row.id + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+						actions.push('<a class="btn btn-warning btn-xs '+detailFlag+'" href="javascript:void(0)" onclick="detail(\'' + row.id + '\')"><i class="fa fa-list-ul"></i>明细</a> ');
+						actions.push('<a class="btn btn-danger btn-xs '+removeBtnFlag+'"  href="javascript:void(0)" onclick="deleteFun(\'' + row.id + '\')"><i class="fa fa-remove"></i>删除</a>');
+						return actions.join('');
+					}
+					}]
+			};
+			$.table.init(options);
+
+		});
+
+		// 明细界面的跳转
+		function detail(id) {
+			let url = ctx+'/business/statementItem/listPage?statementId='+id;
+			$.modal.openTab("结算单明细", url);
+		}
+
+		// 结算订单删除操作
+		function deleteFun(id) {
+			// 发送一个get请求
+			$.operate.post(ctx+'/system/statement/delete?id='+id,function () {
+				// 成功后进行跳转
+				window.location.reload();
+			})
+		}
+
+
+	</script>
+</body>
+</html>

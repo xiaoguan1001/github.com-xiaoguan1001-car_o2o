@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.car.business.mapper.LeaveMapper">
+  <resultMap id="BaseResultMap" type="cn.wolfcode.car.business.domain.Leave">
+    <result column="id" property="id" />
+    <result column="name" property="name" />
+    <result column="reason" property="reason" />
+    <result column="startTime" property="starttime" />
+    <result column="endTime" property="endtime" />
+    <result column="su_userName" property="auditor.userName" />
+
+    <result column="auditId" property="auditid" />
+    <result column="status" property="status" />
+    <result column="info" property="info" />
+  </resultMap>
+  <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+    insert into bus_leave (name, reason, startTime, endTime, auditId, status, info
+      )
+    values (#{name}, #{reason}, #{starttime}, #{endtime}, #{auditid}, #{status}, #{info}
+      )
+  </insert>
+  <update id="updateByPrimaryKey">
+    UPDATE bus_leave
+    SET name=#{name}, reason=#{reason}, startTime=#{starttime}, endTime=#{endtime}, auditId=#{auditid}, status=#{status}, info=#{info}
+    where id=#{id}
+  </update>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, name, reason, startTime, endTime, auditId, status, info
+    from bus_leave
+  </select>
+  <select id="selectForList" resultMap="BaseResultMap">
+    select bl.id, bl.name, bl.reason, bl.startTime, bl.endTime, bl.auditId, bl.status, info,su.user_name su_userName
+    from bus_leave bl LEFT JOIN sys_user su on bl.auditId = su.id
+  </select>
+
+  <select id="selectOne" resultMap="BaseResultMap">
+    select id, name, reason, startTime, endTime, auditId, status, info
+    from bus_leave
+    where id=#{id}
+  </select>
+</mapper>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="common/include :: header('客户列表')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="post-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								关键字：<input type="text" name="keywords"/>
+							</li>
+							<li>
+								是否超管：
+								<select name="email" th:with="type=${@dict.getType('si_car_package')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${type}" th:text="${dict.label}" th:value="${dict.value}"></option>
+								</select>
+							</li>
+							<li>
+								是否冻结：
+								<select name="status" th:with="type=${@dict.getType('si_car_package')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${type}" th:text="${dict.label}" th:value="${dict.value}"></option>
+								</select>
+							</li>
+							<li>
+								所在部门：
+								<select name="dept" th:with="type=${@dict.getType('bus_department')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${type}" th:text="${dict.label}" th:value="${dict.value}"></option>
+								</select>
+							</li>
+
+							<li class="select-time">
+								<label>入职时间：</label>
+								<input type="text" class="time-input" id="startTime" placeholder="开始时间" name="beginTime"/>
+								<span>-</span>
+								<input type="text" class="time-input" id="endTime" placeholder="结束时间" name="endTime"/>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+							    <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+
+			<div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="system:post:add">
+	                <i class="fa fa-plus"></i> 新增
+	            </a>
+	        </div>
+
+	        <div class="col-sm-12 select-table table-striped">
+			    <table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="common/include :: footer" />
+	<script th:inline="javascript">
+		var carPackageDatas = [[${@dict.getType('si_car_package')}]];
+		var serviceCatalogDatas = [[${@dict.getType('si_service_catalog')}]];
+		var auditStatusDatas = [[${@dict.getType('si_audit_status')}]];
+		var saleStatusDatas = [[${@dict.getType('si_sale_status')}]];
+
+		var prefix = ctx + "/business/employee";
+		$(function() {
+			// options 就就是我们界面可能需要用到的一些属性
+		    var options = {
+		        url: prefix + "/query",					// 查询url
+		        createUrl: prefix + "/addPage",			//
+		        updateUrl: prefix + "/editPage?id={id}",
+		        removeUrl: prefix + "/remove",
+		        exportUrl: prefix + "/export",
+		        queryDept: prefix + "/queryDept?id={id}",
+
+		        sortName: "seq",
+		        modalName: "员工",
+		        columns: [{
+		            checkbox: true
+		        },
+		        {
+		            field: 'id',
+		            title: '员工id',
+					visible: true
+		        },
+		        {
+		            field: 'name',
+		            title: '姓名',
+		            sortable: true
+		        },
+
+		        {
+		            field: 'email',
+		            title: '邮箱',
+		            sortable: true
+		        },{
+					field: 'age',
+					title: '年龄',
+					sortable: true
+				},{
+					field: 'admin',
+					title: '是否超管',
+					sortable: true,
+					formatter: function(value, row, index) {
+						if (row.admin == 1){
+							return "是";
+						}else {
+							return "否";
+						}
+					}
+				},{
+					field: 'hiredate',
+					title: '入职时间',
+					sortable: true
+				},{
+					field: 'dept.name',
+					title: '所在部门',
+					sortable: true
+				},{
+		            title: '操作',
+		            align: 'center',
+		            formatter: function(value, row, index) {
+
+		                var actions = [];
+
+						let destroy = '';
+						// 在上架状态和审核中状态是不允许编辑的,要让按钮变灰
+		                if (row.saleStatus == 1){
+
+							destroy += 'disabled';
+						}else if (row.auditStatus == 1){
+							console.log('1');
+							destroy += 'disabled';
+						}
+
+		                actions.push('<a class="btn btn-success '+destroy+' btn-xs " href="javascript:void(0)" ' +
+								'onclick="$.operate.edit(\'' + row.id + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+						actions.push('<a class="btn btn-danger btn-xs "  href="javascript:void(0)" onclick="deleteFun(\'' + row.id + '\')"><i class="fa fa-remove"></i>删除</a>');
+						actions.push('<a class="btn btn-warning btn-rounded btn-sm "  href="javascript:void(0)" onclick="deployMentlHandler(\'' + row.dept.id + '\')"><i class="fa fa-remove"></i>查看部门详情</a>');
+
+
+						return actions.join('');
+		            }
+		        }]
+		    };
+
+		    $.table.init(options);
+		});
+
+		// 发起审核操作
+		function startAudit() {
+			var rows = $.table.selectColumns("id");
+			if (rows[0] != null) {
+				$.modal.open("发起审核", prefix + "/auditPage?id="+rows[0]);
+			}
+		}
+
+
+		// 结算订单删除操作
+		function deleteFun(id) {
+			// 发送一个get请求
+			$.operate.post(prefix+'/delete?id='+id,function () {
+				// 成功后进行跳转
+				window.location.reload();
+
+			})
+		}
+
+		function deployMentlHandler(id) {
+			// 流程文件的部署 打开一个模态框
+			$.modal.open('流程文件部署',prefix+'/queryDept?id='+id)
+		}
+
+
+
+	</script>
+</body>
+</html>
