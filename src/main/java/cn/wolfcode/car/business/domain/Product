@@ -1,0 +1,6 @@
+@Setter
+@Getter
+@ToString
+public class Product {// 产品类
+    private String name;
+}
