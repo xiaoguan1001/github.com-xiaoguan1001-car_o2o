@@ -4,4 +4,6 @@ import lombok.Setter;
 
 @Setter
 public class Brand {
+    private int xxx;
+    private String name;
 }
