@@ -1,9 +1,0 @@
-package cn.wolfcode.car.business.domain;
-
-import lombok.Setter;
-
-@Setter
-public class Aaa {
-    private int aaa;
-    
-}
