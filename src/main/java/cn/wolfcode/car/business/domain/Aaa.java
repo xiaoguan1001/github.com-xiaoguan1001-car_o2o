@@ -8,6 +8,8 @@ import java.math.BigDecimal;
 @Setter
 @Getter
 public class Aaa {
-    private String bbb;
+    private Bb bbb;
     private BigDecimal ccc;
+    private int aaa;
+
 }
